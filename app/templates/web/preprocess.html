@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+
+{% block body %}
+  <div id="error-view" class="not-too-big">
+    <div class="text-center">
+      <h1>x_x</h1>
+      <h3>Preprocess</h3>
+      {% for obj in masks %}
+      <form method="POST">
+          {% csrf_token %}
+          {{ obj.mask }} <button type="submit" name="delete_items" value="{{ obj.pk }}">X</button>
+      </form>
+      {% endfor %}
+      <br><br><br>
+      <form action="/preprocess/" method="post">
+        {% csrf_token %}
+        Add mask strings!<br>
+        {{ form }}
+        <input type="submit" value="Add">
+      </form>
+      <br><br><br>
+      <form method="POST">
+        {% csrf_token %}
+        <button type="submit" name="build_embeddings" value="build_embeddings">Run</button>
+      </form>
+      {% if build_done %}
+      <h3>Build Complete!</h3>
+      {% endif %}
+    </div>
+  </div>
+
+{% endblock %}

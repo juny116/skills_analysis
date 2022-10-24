@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% block body %}
+  <div id="error-view" class="not-too-big">
+    <div class="text-center">
+      <h1>x_x</h1>
+      <h3>Weight update</h3>
+      <form action="/weight_update/" method="post">
+        {% csrf_token %}
+        Name: {{ form.name }}<br>
+        Description: {{ form.description }}<br>
+        Class 1: {{ form.class_1 }}<br>
+        Class 2: {{ form.class_2 }}<br>
+        Abilities: {{ form.abilities }}<br>
+        Objective: {{ form.objective }}<br>
+        Abilities Process Type: {{ form.type }}<br>
+      <input type="submit" value="Submit">
+      {% if success %}
+      <h3>업데이트 완료</h3>
+      {% endif %}
+    </div>
+  </div>
+{% endblock %}

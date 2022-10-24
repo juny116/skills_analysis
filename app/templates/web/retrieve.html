@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+
+{% block body %}
+  <div id="error-view" class="not-too-big">
+    <div class="text-center">
+      <h1>x_x</h1>
+      {% if error %}
+      <h3>PLZ update the weight first!</h3>
+      {% endif %}
+      <form action="/retrieve/" method="post">
+        {% csrf_token %}
+        {{ form }}
+        <input type="submit" value="Submit">
+      </form>
+      <h3>검색 대상</h3>
+      <p>{{ target.name }}_{{ target.q_digit }}<br>{{ target.description }}</p>
+      <h3>검색 결과</h3>
+      {% for result in results %}
+        <p>{{ result.name }}_{{ result.q_digit }}<br>{{ result.description }}</p>
+	    {% endfor %}
+    </div>
+  </div>
+{% endblock %}
