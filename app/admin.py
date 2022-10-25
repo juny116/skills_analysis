@@ -11,7 +11,7 @@ admin.site.register(Job, JobAdmin)
 
 
 class WeightSetupAdmin(admin.ModelAdmin):
-    fields = ['name', 'description', 'class_1', 'class_2', 'abilities', 'objective', 'type']
+    fields = ['name', 'description', 'class_1', 'class_2', 'abilities_concat', 'abilities_avg', 'objective']
     
 admin.site.register(WeightSetup, WeightSetupAdmin)
 

@@ -24,6 +24,10 @@ id_to_idx = {}
 
 cos = nn.CosineSimilarity(dim=1, eps=1e-6)
 
+attr_list = ['name', 'description', 'class_1', 'class_2', 'objective', 'abilities_concat', 'abilities_avg']
+index_to_attr = {i: attr_list[i] for i in range(len(attr_list))}
+sub_attr_list = ['name', 'description', 'class_1', 'class_2', 'objective']
+
 dataset = load_dataset('json', data_files='data/skills.jsonl')['train']
 model = AutoModel.from_pretrained('skt/kobert-base-v1').to('cuda:0')
 tokenizer = KoBERTTokenizer.from_pretrained('skt/kobert-base-v1')
@@ -41,7 +45,7 @@ def preprocess(request):
         build_embeddings = request.POST.get('build_embeddings')
 
         if build_embeddings:
-            build()
+            build(masks)
             build_done = True
 
         elif item_to_delete:
@@ -62,7 +66,7 @@ def weight_update(request):
 
     # try:
     item, created = WeightSetup.objects.get_or_create(id=1, defaults={'name': 0.2, 'description': 0.2, 
-                                                                'class_1': 0.2, 'class_2': 0, 'abilities': 0.2, 'objective': 0.2, 'type':'CONCAT'})
+                                                                'class_1': 0.2, 'class_2': 0, 'objective': 0.2, 'abilities_concat_avg': 0.2, 'abilities_concat': 0})
 
     weighted_embeddings = []
     idx_to_id = []
@@ -74,9 +78,10 @@ def weight_update(request):
             weight = form.cleaned_data
             cnt = 0
             for id, instance in data.items():
-                weighted_embedding = float(weight['name']) * instance['name'] + float(weight['description']) * instance['description'] + \
-                    float(weight['class_1']) * instance['class_1'] + float(weight['class_2']) * instance['class_2'] + \
-                    float(weight['abilities']) * instance['abilities'] + float(weight['objective']) * instance['objective']
+                weights = [[float(weight[attr])] for attr in attr_list]
+                weights = torch.Tensor(weights)
+                weighted_embedding = torch.mul(weights, instance)
+                weighted_embedding = torch.sum(weighted_embedding, 0)
                 weighted_embeddings.append(weighted_embedding)
                 idx_to_id.append(id)
                 id_to_idx[id] = cnt
@@ -127,36 +132,23 @@ def retrieve(request):
     return render(request, 'web/retrieve.html', {'form': form, 'target': target, 'results': results})
 
 
-def build():
+def build(masks):
+    global attr_list, sub_attr_list, data
+
     embeded_data = {}
     for instance in tqdm(dataset):
-        description = tokenizer(instance['description'], return_tensors='pt')
-        description = {k: v.to('cuda:0') for k, v in description.items()}
-        description = model(**description).pooler_output[0].detach().cpu()
+        batch_inputs = [instance[attr] for attr in sub_attr_list]
+        batch_inputs.append(' '.join(instance['abilities']))
+        batch_inputs = tokenizer(batch_inputs, return_tensors='pt', padding=True)
+        batch_inputs = {k: v.to('cuda:0') for k, v in batch_inputs.items()}
+        outputs = model(**batch_inputs).pooler_output.detach().cpu()
 
-        name = tokenizer(instance['name'], return_tensors='pt')
-        name = {k: v.to('cuda:0') for k, v in name.items()}
-        name = model(**name).pooler_output[0].detach().cpu()
-
-        class_1 = tokenizer(instance['class_1'], return_tensors='pt')
-        class_1 = {k: v.to('cuda:0') for k, v in class_1.items()}
-        class_1 = model(**class_1).pooler_output[0].detach().cpu()
-
-        class_2 = tokenizer(instance['class_2'], return_tensors='pt')
-        class_2 = {k: v.to('cuda:0') for k, v in class_2.items()}
-        class_2 = model(**class_2).pooler_output[0].detach().cpu()
-
-        objective = tokenizer(instance['objective'], return_tensors='pt')
-        objective = {k: v.to('cuda:0') for k, v in objective.items()}
-        objective = model(**objective).pooler_output[0].detach().cpu()
-
-        abilities = tokenizer(' '.join(instance['abilities']), return_tensors='pt')
-        abilities = {k: v.to('cuda:0') for k, v in abilities.items()}
-        abilities = model(**abilities).pooler_output[0].detach().cpu()
-
-        embeded_data[instance['id']] = {'description': description, 'name': name, 
-            'class_1': class_1, 'class_2': class_2, 'objective':objective, 'abilities': abilities}
-    
+        batch_inputs = tokenizer(instance['abilities'], return_tensors='pt', padding=True)
+        batch_inputs = {k: v.to('cuda:0') for k, v in batch_inputs.items()}
+        ablilites_outputs = model(**batch_inputs).pooler_output.detach().cpu()
+        ablilites_outputs = ablilites_outputs.mean(dim=0).unsqueeze(0)
+        outputs = torch.cat([outputs, ablilites_outputs], dim=0)
+        embeded_data[instance['id']] = outputs    
 
     with open('data/data.pkl', 'wb') as f:
         pickle.dump(embeded_data, f, pickle.HIGHEST_PROTOCOL)

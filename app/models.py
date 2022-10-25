@@ -15,13 +15,10 @@ class WeightSetup(models.Model):
     description = models.DecimalField(max_digits=5, decimal_places=3)
     class_1 = models.DecimalField(max_digits=5, decimal_places=3)
     class_2 = models.DecimalField(max_digits=5, decimal_places=3)
-    abilities = models.DecimalField(max_digits=5, decimal_places=3)
+    abilities_concat = models.DecimalField(max_digits=5, decimal_places=3)
+    abilities_avg = models.DecimalField(max_digits=5, decimal_places=3)
     objective = models.DecimalField(max_digits=5, decimal_places=3)
-    type = models.CharField(
-        max_length=20,
-        choices=CHOICES,
-        default='CONCAT',
-    )
+
 
 class Job(models.Model):
     id = models.CharField(max_length=30, primary_key=True)
