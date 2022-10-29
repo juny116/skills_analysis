@@ -9,14 +9,15 @@
       {% endif %}
       <form action="/retrieve/" method="post">
         {% csrf_token %}
-        {{ form }}
+        Job ID: {{ form.job_id }}<br>
+        Num : {{ form.topk }}<br>
         <input type="submit" value="Submit">
       </form>
       <h3>검색 대상</h3>
       <p>{{ target.name }}_{{ target.q_digit }}<br>{{ target.description }}</p>
       <h3>검색 결과</h3>
-      {% for result in results %}
-        <p>{{ result.name }}_{{ result.q_digit }}<br>{{ result.description }}</p>
+      {% for result, sim in results %}
+        <p>{{ result.name }}_{{ result.q_digit }}<br>{{ result.description }}<br>유사도 점수 {{ sim|floatformat:3 }}</p>
 	    {% endfor %}
     </div>
   </div>

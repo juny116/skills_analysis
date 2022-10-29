@@ -115,16 +115,18 @@ def retrieve(request):
 
         if form.is_valid():
             job_id = form.cleaned_data['job_id']
-        
+            num = int(form.cleaned_data['topk'])
+
             target_embeddings = weighted_embeddings[id_to_idx[job_id]]
             similarity = cos(target_embeddings, weighted_embeddings)
 
-            topk = torch.topk(similarity, 5)
-
+            topk = torch.topk(similarity, num)
+            scores = topk.values.tolist()
             topk = [idx_to_id[idx] for idx in topk.indices]
 
             target = Job.objects.get(id=job_id)
-            results = [Job.objects.get(id=k) for k in topk]
+            jobs = [Job.objects.get(id=k) for k in topk]
+            results = [result for result in zip(jobs, scores)]
             # results = Job.objects.filter(id__in=topk)
     else:
         form = SearchForm()

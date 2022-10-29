@@ -11,6 +11,7 @@ class WeightForm(forms.ModelForm):
 
 class SearchForm(forms.Form):
     job_id = forms.CharField(max_length=20)
+    topk = forms.DecimalField(max_digits=5)
 
 
 class MaskStringForm(forms.ModelForm):
