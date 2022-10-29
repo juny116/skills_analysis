@@ -5,15 +5,13 @@ from datasets import load_dataset, DatasetDict
 from tqdm import tqdm
 import pickle
 
-# dataset = DatasetDict()
+
 dataset = load_dataset('json', data_files='data/skills.jsonl')['train']
 
 
 model = AutoModel.from_pretrained('skt/kobert-base-v1')
 # tokenizer = AutoTokenizer.from_pretrained('skt/kobert-base-v1')
 tokenizer = KoBERTTokenizer.from_pretrained('skt/kobert-base-v1')
-
-inputs = tokenizer(dataset[0]['description'], return_tensors='pt')
 
 embeded_data = {}
 
