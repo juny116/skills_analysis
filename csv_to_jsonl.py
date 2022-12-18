@@ -27,6 +27,9 @@ with open('data/skills.csv', newline='', encoding='utf-8-sig') as csvfile:
         if start:
             start = False
             continue
+        # if ability.get(row[0]) is None:
+        #     print(row[0])
+
         data.append({'id': row[0].strip(), 'description': row[1].strip(), 'name': row[2].strip(), 
             'q_digit': row[5].strip(), 'class_1': ''.join([i for i in row[6].strip() if not i.isdigit()]) , 'class_2': ''.join([i for i in row[7].strip() if not i.isdigit()]), 'objective': row[9].strip(),
             'abilities': ability[row[0]]})

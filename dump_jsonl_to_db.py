@@ -6,6 +6,7 @@ django.setup()
 
 from app.models import Job
 
+Job.objects.all().delete()
 
 from datasets import load_dataset
 dataset = load_dataset('json', data_files='data/skills.jsonl')['train']

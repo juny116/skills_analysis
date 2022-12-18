@@ -1,0 +1,6 @@
+Django
+transformers
+sentence_transformers
+git+https://github.com/SKTBrain/KoBERT.git#egg=kobert_tokenizer&subdirectory=kobert_hf
+gunicorn
+datasets
