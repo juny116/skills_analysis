@@ -39,11 +39,16 @@ div[contenteditable] {
 	justify-content: space-evenly; 
 }
 
+.font_temp {
+	font-size: 20px;
+}
+
 #form_left {
 	/* display: flex; */
 	text-align: left;
 	/* justify-content: space-between;  */
 }
+
 #form_right {
 	/* display: flex; */
 	text-align: left;
@@ -53,3 +58,4 @@ div[contenteditable] {
 #result {
 	text-align: left;
 }
+
