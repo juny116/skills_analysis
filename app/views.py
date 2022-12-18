@@ -27,10 +27,11 @@ index_to_attr = {i: attr_list[i] for i in range(len(attr_list))}
 sub_attr_list = ['name', 'description', 'class_1', 'class_2', 'objective']
 
 model = SentenceTransformer('snunlp/KR-SBERT-V40K-klueNLI-augSTS').to('cuda:0')
+# model = SentenceTransformer('skt/kobert-base-v1').to('cuda:0')
 
 dataset = load_dataset('json', data_files='data/skills.jsonl')['train']
-# model = AutoModel.from_pretrained('skt/kobert-base-v1').to('cuda:0')
-tokenizer = KoBERTTokenizer.from_pretrained('skt/kobert-base-v1')
+
+# tokenizer = KoBERTTokenizer.from_pretrained('skt/kobert-base-v1')
 
 def build(masks):
     global attr_list, sub_attr_list, data
@@ -220,7 +221,8 @@ def retrieve2(request):
     global attr_list
     global idx_to_id
     global id_to_idx
-    # print(id_to_idx)
+    global data
+    all_jobs = Job.objects.all()
     if request.method == 'POST':
         form = SearchForm(request.POST)
 
@@ -228,36 +230,53 @@ def retrieve2(request):
                                                                     'class_1': 0.2, 'class_2': 0, 'objective': 0.2, 'abilities_avg': 0.2, 'abilities_concat': 0})
 
         if form.is_valid():
-            job_id = form.cleaned_data['job_id']
+            job_name = form.cleaned_data['job_name']
             num = int(form.cleaned_data['topk'])
+            q_digit = form.cleaned_data['q_digit']
+            method = form.cleaned_data['method']
 
             jobs = Job.objects.all()
+            target = jobs.filter(name=job_name, q_digit=q_digit).first()
+            if target is None:
+                return render(request, 'web/retrieve.html', {'form': form, 'target': target, 'results': results, 'all_jobs': all_jobs, 'error': True})
 
             # calc sim for all field (include similarity between different fields)
-            similarity = util.cos_sim(data[id_to_idx[job_id]:id_to_idx[job_id]+7], data)
-            torch.set_printoptions(profile="full")
+            if method == 'sim':
+                similarity = util.cos_sim(data[id_to_idx[target.id]:id_to_idx[target.id]+7], data)
+                # torch.set_printoptions(profile="full")
+                # construct indices for similarity between same field
+                indices = [[i * len(attr_list) + j for i in range(len(jobs))] for j in range(len(attr_list))]
+                temp = []
+                for i in range(len(attr_list)):
+                    temp.append(similarity[i][indices[i]])
+                similarity = torch.stack(temp)
 
-            # construct indices for similarity between same field
-            indices = [[i * len(attr_list) + j for i in range(len(jobs))] for j in range(len(attr_list))]
-            temp = []
-            for i in range(len(attr_list)):
-                temp.append(similarity[i][indices[i]])
-            similarity = torch.stack(temp)
+                weights = [[float(getattr(weight,attr))] for attr in attr_list]
+                weights = torch.tensor(weights).view(len(attr_list), 1)
+                similarity = weights * similarity
+                similarity = torch.sum(similarity, dim=0)
 
-            weights = [[float(getattr(weight,attr))] for attr in attr_list]
-            weights = torch.tensor(weights).view(len(attr_list), 1)
-            similarity = weights * similarity
-            similarity = torch.sum(similarity, dim=0)
+            elif method == 'emb':
+                ################## weighted sum of embeddings
+                reshpaed_data = data.reshape(len(jobs), len(attr_list), -1)
+                weights = [[float(getattr(weight,attr))] for attr in attr_list]
+                weights = torch.tensor(weights).view(1, len(attr_list), 1)
+                weighted_sum = weights * reshpaed_data
+                weighted_sum = torch.sum(weighted_sum, dim=1)
+
+                target_id = int(id_to_idx[target.id] / 7)
+
+                similarity = util.cos_sim(weighted_sum[target_id], weighted_sum)[0]
+                #####################
 
             topk = torch.topk(similarity, num)
             scores = topk.values.tolist()
             topk = [idx_to_id[idx] for idx in topk.indices]
 
-            target = jobs.get(id=job_id)
             retreived = [jobs.get(id=k) for k in topk]
             results = [result for result in zip(retreived, scores)]
 
     else:
         form = SearchForm()
 
-    return render(request, 'web/retrieve.html', {'form': form, 'target': target, 'results': results})
+    return render(request, 'web/retrieve.html', {'form': form, 'target': target, 'results': results, 'all_jobs': all_jobs, 'error': False})

@@ -1,24 +1,55 @@
 {% extends 'base.html' %}
 
 {% block body %}
-  <div id="error-view" class="not-too-big">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.js"> </script>  
+  <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.16/jquery-ui.js"> </script>  
+  <link href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.16/themes/ui-lightness/jquery-ui.css"	rel="stylesheet" type="text/css"/>
+  <div id="error-view">
     <div class="text-center">
-      <h1>x_x</h1>
-      {% if error %}
-      <h3>PLZ update the weight first!</h3>
-      {% endif %}
-      <form action="/retrieve/" method="post">
+      <h3>유사도 분석</h3>
+      <br><br>
+      <form action="/retrieve/" method="post" class="not-too-big">
         {% csrf_token %}
-        Job ID: {{ form.job_id }}<br>
-        Num : {{ form.topk }}<br>
-        <input type="submit" value="Submit">
+        <div  id="form_style">
+          <div id="form_left">
+          직종명: <br>
+          Q_DIGIT: <br>
+          분석 결과 개수: <br>
+          연산 방식: <br><br>
+          </div>
+          <div id="form_right">
+            {{ form.job_name }} <br>
+            {{ form.q_digit }}  <br>
+            {{ form.topk }}     <br>
+            {{ form.method }}     <br><br>
+          </div>
+        </div>
+        <input type="submit" value="분석 시작">
       </form>
-      <h3>검색 대상</h3>
-      <p>{{ target.name }}_{{ target.q_digit }}<br>{{ target.description }}</p>
-      <h3>검색 결과</h3>
+      <script>
+        $(function() {
+          var availableTags = [
+              {% for job in all_jobs %}
+                  "{{ job.name }}",
+              {% endfor %}
+          ];
+          console.log(availableTags);
+          $( "#tags" ).autocomplete({
+            source: availableTags
+          });
+        });
+      </script>
+      <!-- <h3>분석 대상</h3>
+      <p>{{ target.name }}_{{ target.q_digit }}<br>{{ target.description }}</p> -->
+      <h3>분석 결과</h3>
+      {% if error %}
+      <h4>해당하는 직종이 존재하지 않습니다.</h4>
+      {% endif %}
+      <div id="result">
       {% for result, sim in results %}
-        <p>{{ result.name }}_{{ result.q_digit }}<br>{{ result.description }}<br>유사도 점수 {{ sim|floatformat:3 }}</p>
+        <p><b>{{ result.name }}_{{ result.q_digit }}</b> ({{ sim|floatformat:3 }})<br>{{ result.description }}</p>
 	    {% endfor %}
+      </div>
     </div>
   </div>
 {% endblock %}

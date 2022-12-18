@@ -81,7 +81,7 @@ p {
 	text-align: left !important;
 }
 .text-center {
-	text-align: center !important;
+	text-align: center;
 }
 .text-right {
 	text-align: right !important;
@@ -141,4 +141,10 @@ p {
 
 .linebreak {
 	white-space: pre-wrap;
+}
+
+
+#form_left {
+	text-align: left;
+	justify-content: start; 
 }

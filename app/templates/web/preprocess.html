@@ -3,8 +3,7 @@
 {% block body %}
   <div id="error-view" class="not-too-big">
     <div class="text-center">
-      <h1>x_x</h1>
-      <h3>Preprocess</h3>
+      <h3>데이터 전처리</h3>
       {% for obj in masks %}
       <form method="POST">
           {% csrf_token %}
@@ -14,7 +13,7 @@
       <br><br><br>
       <form action="/preprocess/" method="post">
         {% csrf_token %}
-        Add mask strings!<br>
+        마스킹할 단어를 추가해 주세요<br>
         {{ form }}
         <input type="submit" value="Add">
       </form>

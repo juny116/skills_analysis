@@ -2,8 +2,7 @@
 {% block body %}
   <div id="error-view" class="not-too-big">
     <div class="text-center">
-      <h1>x_x</h1>
-      <h3>Weight update</h3>
+      <h3>가중치 세부 조정</h3>
       <form action="/weight_update/" method="post">
         {% csrf_token %}
         Name: {{ form.name }}<br>
